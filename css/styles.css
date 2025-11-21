@@ -11,7 +11,13 @@ main section {
     width: 33%;
 }
 
-.x-times {
+.xl {
+    font-size: x-large;
+    font-weight: lighter;
+    color: red;
+}
+
+.xxl {
     font-size: xx-large;
     font-weight: lighter;
     color: red;
@@ -19,6 +25,10 @@ main section {
 
 .col-red {
     color: red;
+}
+
+.col-yellow {
+    color: yellow;
 }
 
 button[name="submit"] {
@@ -33,4 +43,11 @@ button[name="submit"] {
 button[name="submit"]:hover {
     color: #fff;
     background: #000;
+}
+
+.stock-list img {
+    width: auto;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
 }
