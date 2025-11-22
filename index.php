@@ -7,13 +7,13 @@ global $conn, $amounts;
 const INSERT_MSG_ERROR = "Error while inserting :";
 const UNEXPECTED_MSG_ERROR = "Unexpected error: ";
 
-function handle_error(string $msg, mysqli_sql_exception $ex) {
+function handle_error(string $msg, PDOException $ex) {
     echo"<div class='col-red'><span>{$msg} </span><p class='xl'>{$ex}</p></div>";
 }
 
 function close_connexion() {
     global $conn;
-    mysqli_close($conn);
+    $conn = null;
 }
 
 function initialize_stock() {
@@ -29,10 +29,9 @@ function initialize_stock() {
 
             $insert = "INSERT INTO stock (value, qty, type) 
                             VALUES ('$value', '$qty', '$type')";
-
-            mysqli_query($conn, $insert);
+            $conn->exec($insert);
         }
-    } catch (mysqli_sql_exception $ex) {
+    } catch (PDOException $ex) {
         handle_error(INSERT_MSG_ERROR, $ex);
     }
 }
@@ -42,23 +41,24 @@ function display_stock() {
 
     try {
         $select = "SELECT qty, value FROM stock WHERE qty > 0";
-        $result = mysqli_query($conn, $select);
+        $currencies = $conn->query($select)->fetchAll(PDO::FETCH_ASSOC);
 
-        if (mysqli_num_rows($result) > 0) {
-            echo"<ul>";
-            while ($row = mysqli_fetch_assoc($result)) {
-                $val = $row['value'];
-//                echo"qty: {$row['qty']}; value: {$row['value']}; type: {$row['type']}; <br>";
-                echo "<li class='stock-list'>
-                    <img src='{$amounts[$val]['img']}' alt='give me that, it s only paper:)'/>
-                    <span class='xxl'> X {$row['qty']}</span>
-                </li>";
-            }
-            echo"</ul>";
-        } else {
+        if (!isset($currencies)) {
             echo"Stock vide";
+            return;
         }
-    } catch (mysqli_sql_exception $ex) {
+
+        echo "<ul>";
+        foreach ($currencies as $currency) {
+            $val = $currency['value'];
+            $img_link = $amounts[$val]['img'];
+            echo "<li class='stock-list'>
+                    <img src='$img_link' alt='give me that, it s only paper:)'/>
+                    <span class='xxl'> X {$currency['qty']}</span>
+                </li>";
+        }
+        echo "</ul>";
+    } catch (PDOException $ex) {
         handle_error(INSERT_MSG_ERROR, $ex);
     }
 }
@@ -66,8 +66,7 @@ function display_stock() {
 function fetch_stock(): array {
     global $conn;
     $select = "SELECT qty, value, type FROM stock WHERE qty > 0 ORDER BY value DESC";
-    $query = mysqli_query($conn, $select);
-    return mysqli_fetch_all($query, MYSQLI_ASSOC);
+    return $conn->query($select)->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function format_due_amount_line_msg($msg): string {
@@ -121,7 +120,7 @@ function handle_payment(): string {
     try {
         $stock_list_by_value_desc = fetch_stock();
         $stock_list_length = count($stock_list_by_value_desc);
-    } catch (mysqli_sql_exception $ex) {
+    } catch (PDOException $ex) {
         handle_error(UNEXPECTED_MSG_ERROR, $ex);
         return format_due_amount_line_msg("Change indisponible, veuillez réessayer ultérieurement s'il vous plaît !");
     }
@@ -129,7 +128,7 @@ function handle_payment(): string {
     $result = "Stock indisponible";
     if ($stock_list_length > 0) {
         $due_amount = $debt - $loan;
-        $amount_to_return = (int) floor($due_amount); // entire part of amount to return!
+        $amount_to_return = (int) floor($due_amount);
         $decimal_part_of_amount_to_return = $due_amount - $amount_to_return;
 
         $result = "<section><h2>Je dois vous rendre : </h2>";
