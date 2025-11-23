@@ -11,16 +11,19 @@ main section {
     width: 33%;
 }
 
+.m {
+    font-size: medium;
+    font-weight: lighter;
+}
+
 .xl {
     font-size: x-large;
     font-weight: lighter;
-    color: red;
 }
 
 .xxl {
     font-size: xx-large;
     font-weight: lighter;
-    color: red;
 }
 
 .col-red {
@@ -33,6 +36,7 @@ main section {
 
 .col-orange {
     color: orange;
+    font-weight: bolder;
 }
 
 button[name="submit"] {
