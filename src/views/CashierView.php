@@ -28,14 +28,6 @@ class CashierView {
         echo "</ul>";
     }
 
-    public function format_due_amount_line_msg($msg): string {
-        return "<section class='col-red xxl'>{$msg}</section>";
-    }
-
-    public function format_due_amount_line($type, $val, $qty): string {
-        return "<p class='col-red'>{$type}(s) de {$val} <span class='xxl col-red'>X {$qty}</span>.</p>";
-    }
-
     public function get_transaction_msg(): string {
         return $this->transactionMsg;
     }

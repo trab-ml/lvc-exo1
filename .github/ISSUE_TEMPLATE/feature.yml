@@ -1,0 +1,15 @@
+name: "Feature Adding"
+description: Create a new ticket for a feature.
+title: "[feat] - <title>"
+labels: [
+  "feat"
+]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Summary"
+      description: Provide a brief explanation of the feature
+      placeholder: Describe in a few lines your feature
+    validations:
+      required: true
