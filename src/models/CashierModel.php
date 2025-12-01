@@ -1,20 +1,24 @@
 <?php
-const PATH_TO_INTERFACE_PACKAGE = __DIR__ . "/../interfaces";
+const CURRENT_DIR = __DIR__;
+const PATH_TO_INTERFACE_PACKAGE = CURRENT_DIR . "/../interfaces";
 
 require_once PATH_TO_INTERFACE_PACKAGE . "/FormatedDisplayInterface.php";
 require_once PATH_TO_INTERFACE_PACKAGE . "/CashierModelInterface.php";
 require_once PATH_TO_INTERFACE_PACKAGE . "/DatabaseInterface.php";
+require_once CURRENT_DIR . "/AmountModel.php";
+require_once CURRENT_DIR . "/../exceptions/EdgeCaseException.php";
 
 class CashierModel implements FormatedDisplayInterface, CashierModelInterface, DatabaseInterface {
     private ?PDO $db_conn;
-    private Array $amount_list;
+    private array $amount_list;
 
-    const INSERT_MSG_ERROR = "Error while inserting : ";
-    const SELECT_MSG_ERROR = "Error while fetching : ";
-    const UPDATE_MSG_ERROR = "Error while updating : ";
+    const INSERT_ERROR_MSG = "Error while inserting : ";
+    const SELECT_ERROR_MSG = "Error while fetching : ";
+    const UPDATE_ERROR_MSG = "Error while updating : ";
+    const STOCK_UPDATE_ERROR_MSG = "Error while updating stock : ";
     const MIN = 1, MAX = 10;
 
-    public function __construct(PDO $db_conn, Array $amount_list) {
+    public function __construct(PDO $db_conn, array $amount_list) {
         $this->db_conn = $db_conn;
         $this->amount_list = $amount_list;
     }
@@ -25,31 +29,31 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
         }
     }
 
-    public function insert_amount(Array $amount): void {
+    public function insert_amount(array $amount): void {
         try {
             $value = (float) $amount['value'];
             $qty = rand(self::MIN, self::MAX);
             $type = $amount['type'];
 
-            $insert = "INSERT INTO stock (value, qty, type) 
+            $insert = "INSERT INTO stock (value, qty, type)
                             VALUES (:value, :qty, :type)";
             $stmt = $this->db_conn->prepare($insert);
             $stmt->execute(['value' => $value, 'qty' => $qty, 'type' => $type]);
         } catch (PDOException $ex) {
-            $this->handle_error(self::INSERT_MSG_ERROR, $ex);
+            handle_error(self::INSERT_ERROR_MSG, $ex);
         }
     }
 
     public function update_amount(int $id, int $newQty): void {
         try {
-            $id = filter_var (id, FILTER_SANITIZE_NUMBER_INT);
-            $newQty = filter_var (id, FILTER_SANITIZE_NUMBER_INT);
+            $id = filter_var ($id, FILTER_SANITIZE_NUMBER_INT);
+            $newQty = filter_var ($newQty, FILTER_SANITIZE_NUMBER_INT);
 
-            $update = "UPDATE stock SET VALUES qty = :qty WHERE id = :id;";
+            $update = "UPDATE stock SET qty = :newQty WHERE id = :id;";
             $stmt = $this->db_conn->prepare($update);
-            $stmt->execute(['qty' => $newQty, 'id' => $id]);
+            $stmt->execute(['newQty' => $newQty, 'id' => $id]);
         } catch (PDOException $ex) {
-            $this->handle_error(self::UPDATE_MSG_ERROR, $ex);
+            handle_error(self::UPDATE_ERROR_MSG, $ex);
         }
     }
 
@@ -59,72 +63,110 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
             $select = "SELECT id, qty, value, type FROM stock WHERE qty > 0 ORDER BY value DESC";
             $stock_records = $this->db_conn->query($select)->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $ex) {
-            $this->handle_error(self::SELECT_MSG_ERROR, $ex);
+            handle_error(self::SELECT_ERROR_MSG, $ex);
         }
         return $stock_records;
     }
 
     /**
-     * To replace the redundant lines (3 times) : $amount_to_return = ...; $result .= ...;
+     * Update the stock
+     * @param mixed $amount_to_return
+     * @param float $new_amount
      * @param int $id
-     * @param int $newQty
+     * @param int $val
+     * @param int $qty
+     * @param string $type
+     * @param mixed $needed_qty
      * @return string
      */
-    private function update_stock_qty(int $id, int $newQty): string {
-        /**
-         * TODO: Not implemented yet
-         */
-        return "HEY, I'M VERY USEFUL :)"; // success info for result msg!
+    private function update_stock_qty(int $needed_qty, AmountModel $amountModel): string {
+        $this->update_amount($amountModel->get_id(), $amountModel->get_qty() - $needed_qty);
+        return $this->format_line($amountModel->get_type(), $amountModel->get_value(), $needed_qty);
+    }
+
+    private function deposite_amount($stock_list_by_value_desc, $stock_list_length, $amount_to_return): void {
+        for ($i = 0; $i < $stock_list_length && $amount_to_return != 0; $i++) {
+            $val = $stock_list_by_value_desc[$i]['value'];
+            $mod = ($amount_to_return * 100) % ($val * 100);
+            $needed_qty = 1;
+            if ($mod == 0) {
+                $amount_to_return = 0;
+                $needed_qty = $amount_to_return / $val;
+            } elseif ($amount_to_return >= $val) {
+                $amount_to_return = $amount_to_return - $val;
+            }
+
+            $amountModel = new AmountModel($stock_list_by_value_desc[$i]['id'],
+                            $stock_list_by_value_desc[$i]['value'],
+                            $stock_list_by_value_desc[$i]['qty'],
+                            $stock_list_by_value_desc[$i]['type']);
+            $this->update_stock_qty($needed_qty, $amountModel);
+        }
     }
 
     private function compute_due_amount($stock_list_by_value_desc, $stock_list_length, $amount_to_return, $is_decimal = false): string {
-        $result = "";
+        try {
+            $this->db_conn->beginTransaction();
+            $amount_to_return_copy = $amount_to_return;
 
-        for ($i = 0; $i < $stock_list_length && $amount_to_return != 0; $i++) {
-            $val = $stock_list_by_value_desc[$i]['value'];
-            $mod = $is_decimal ? ($amount_to_return * 100) % ($val * 100) : $amount_to_return % $val;
-            $available_qty = $stock_list_by_value_desc[$i]['qty'];
-            $needed_qty = 1;
-            if ($mod == 0) {
-                $needed_qty = $amount_to_return / $val;
-                if ($needed_qty <= $available_qty) {
-                    // TODO: mettre à jour le stock en bdd puis poursuivre en cas de succès, sinon avorter
-                    $amount_to_return = 0;
-                    $result .= $this->format_line($stock_list_by_value_desc[$i]['type'], $val, $needed_qty);
-                } else {
-                    // TODO: mettre à jour le stock en bdd puis poursuivre en cas de succès, sinon avorter
-                    $amount_to_return -= $available_qty * $val;
-                    $result .= $this->format_line($stock_list_by_value_desc[$i]['type'], $val, $available_qty);
+            $this->deposite_amount(
+                $stock_list_by_value_desc,
+                $stock_list_length,
+                $amount_to_return_copy);
+
+            $result = "";
+            for ($i = 0; $i < $stock_list_length && $amount_to_return_copy != 0; $i++) {
+                $val = $stock_list_by_value_desc[$i]['value'];
+                $mod = $is_decimal ? ($amount_to_return_copy * 100) % ($val * 100) : $amount_to_return_copy % $val;
+                $available_qty = $stock_list_by_value_desc[$i]['qty'];
+                $needed_qty = 1;
+                if ($mod == 0) {
+                    $needed_qty = $amount_to_return_copy / $val;
+                    $amount_to_return_copy = $needed_qty <= $available_qty
+                                    ? 0
+                                    : $amount_to_return_copy - $available_qty * $val;
+                } elseif ($amount_to_return_copy >= $val) {
+                    $amount_to_return_copy = $amount_to_return_copy - $val;
                 }
-            } else if ($amount_to_return >= $val) {
-                // TODO: mettre à jour le stock en bdd puis poursuivre en cas de succès, sinon avorter
-                $amount_to_return -= $val;
-                $result .= $this->format_line($stock_list_by_value_desc[$i]['type'], $val, $needed_qty);
+
+                $amountModel = new AmountModel((int) $stock_list_by_value_desc[$i]['id'],
+                                $val,
+                                (int) $available_qty,
+                                $stock_list_by_value_desc[$i]['type']);
+                $result .= $this->update_stock_qty((int) $needed_qty, $amountModel);
             }
+            
+            $this->db_conn->commit();
+        } catch (PDOException $ex) {
+            handle_error(self::STOCK_UPDATE_ERROR_MSG, $ex);
+            $this->db_conn->rollBack();
         }
 
         return $result;
     }
 
-    public function handle_payment(): string {
-        global $cashier_model, $cashier_view;
-
-        $loan = filter_var($_POST['loan'], FILTER_VALIDATE_FLOAT);
-        $debt = filter_var($_POST['debt'], FILTER_VALIDATE_FLOAT);
-
+    private function handle_edge_cases($loan, $debt): array {
         if ($loan <= 0) {
-            return $this->format_line_msg("Vous n'avez rien à payer !");
+            $error_msg = $this->format_line_msg("Vous n'avez rien à payer !");
         }
         if ($debt < $loan) {
-            return $this->format_line_msg("Le montant à payer ($debt €) ne peut être inférieur à l'emprunt ($loan €) effectué !");
+            $error_msg = $this->format_line_msg("Le montant à payer ($debt €) ne peut être inférieur à l'emprunt ($loan €) effectué !");
         }
 
         try {
-            $stock_list_by_value_desc = $cashier_model->fetch_stock_order_by_desc();
-            $stock_list_length = count($stock_list_by_value_desc);
+            return $this->fetch_stock_order_by_desc();
         } catch (PDOException $ex) {
-            return $this->format_line_msg("Change indisponible, veuillez réessayer ultérieurement s'il vous plaît !");
+            $error_msg = $this->format_line_msg("Change indisponible, veuillez réessayer ultérieurement s'il vous plaît !");
         }
+
+        throw new EdgeCaseException($error_msg);
+    }
+
+    public function handle_payment(): string {
+        $loan = filter_var($_POST['loan'], FILTER_VALIDATE_FLOAT);
+        $debt = filter_var($_POST['debt'], FILTER_VALIDATE_FLOAT);
+        $stock_list_by_value_desc = $this->handle_edge_cases($loan, $debt);
+        $stock_list_length = count($stock_list_by_value_desc);
 
         $result = "Stock indisponible";
         if ($stock_list_length > 0) {
