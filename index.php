@@ -1,12 +1,12 @@
 <?php
 error_reporting(E_ALL);
 
-require_once "bootstrap.php";
+require_once  __DIR__ . "/src/config/bootstrap.php"; // TODO: composer.json not applied yet
 
-if (file_exists("src/utils.php")
-    && file_exists("src/amounts.php")) {
-    require_once "src/utils.php";
-    require_once "src/amounts.php";
+if (file_exists("src/config/utils.php")
+    && file_exists("src/config/amounts.php")) {
+    require_once "src/config/utils.php";
+    require_once "src/config/amounts.php";
 }
 
 $conn = Database::get_instance();

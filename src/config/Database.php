@@ -1,11 +1,10 @@
 <?php
-const DIR = __DIR__;
 
-if (file_exists("src/utils.php")) {
-    require_once DIR . "/../utils.php";
+if (file_exists("utils.php")) {
+    require_once "utils.php";
 }
 
-loadEnv(DIR . "/../../.env");
+loadEnv(__DIR__ . "/../../.env");
 
 class Database
 {
