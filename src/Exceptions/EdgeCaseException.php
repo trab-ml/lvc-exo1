@@ -1,4 +1,8 @@
 <?php
+namespace App\Exceptions;
+
+use \Exception;
+
 class EdgeCaseException extends Exception {
   public function errorMessage() {
     return "<p>EdgeCaseException:" . $this->getMessage() . "</p>";

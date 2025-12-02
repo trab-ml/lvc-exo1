@@ -1,4 +1,6 @@
 <?php
+namespace App\Models;
+
 class AmountModel {
     private int $id;
     private float $value;

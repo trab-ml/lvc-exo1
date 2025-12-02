@@ -1,13 +1,11 @@
 <?php
 error_reporting(E_ALL);
 
-require_once  __DIR__ . "/src/config/bootstrap.php"; // TODO: composer.json not applied yet
+require_once  __DIR__ . "/src/Config/bootstrap.php";
 
-if (file_exists("src/config/utils.php")
-    && file_exists("src/config/amounts.php")) {
-    require_once "src/config/utils.php";
-    require_once "src/config/amounts.php";
-}
+use App\Config\Database;
+use App\Models\CashierModel;
+use App\Views\CashierView;
 
 $conn = Database::get_instance();
 global $amounts;

@@ -6,14 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'AmountModel' => $baseDir . '/src/models/AmountModel.php',
-    'CashierModel' => $baseDir . '/src/models/CashierModel.php',
-    'CashierModelInterface' => $baseDir . '/src/interfaces/CashierModelInterface.php',
-    'CashierView' => $baseDir . '/src/views/CashierView.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
-    'Database' => $baseDir . '/src/config/Database.php',
-    'DatabaseInterface' => $baseDir . '/src/interfaces/DatabaseInterface.php',
-    'EdgeCaseException' => $baseDir . '/src/exceptions/EdgeCaseException.php',
-    'EnvFileExtractionException' => $baseDir . '/src/exceptions/EnvFileExtractionException.php',
-    'FormatedDisplayInterface' => $baseDir . '/src/interfaces/FormatedDisplayInterface.php',
 );

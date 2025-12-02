@@ -1,8 +1,7 @@
 <?php
+namespace App\Config;
 
-if (file_exists("utils.php")) {
-    require_once "utils.php";
-}
+use \PDO, \PDOException;
 
 loadEnv(__DIR__ . "/../../.env");
 

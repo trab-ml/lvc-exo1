@@ -1,10 +1,12 @@
 <?php
+namespace App\Views;
+
 class CashierView {
-    private Array $stock_list;
-    private Array $amount_list;
+    private array $stock_list;
+    private array $amount_list;
     private string $transactionMsg;
 
-    public function __construct(Array $stock_list, Array $amount_list) {
+    public function __construct(array $stock_list, array $amount_list) {
         $this->stock_list = $stock_list;
         $this->amount_list = $amount_list;
         $this->transactionMsg = "";

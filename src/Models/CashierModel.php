@@ -1,4 +1,12 @@
 <?php
+namespace App\Models;
+
+use App\Interfaces\FormatedDisplayInterface;
+use App\Interfaces\CashierModelInterface;
+use App\Interfaces\DatabaseInterface;
+use App\Exceptions\EdgeCaseException;
+use \PDO, \PDOException;
+
 class CashierModel implements FormatedDisplayInterface, CashierModelInterface, DatabaseInterface {
     private ?PDO $db_conn;
     private array $amount_list;
@@ -7,7 +15,8 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
     const SELECT_ERROR_MSG = "Error while fetching : ";
     const UPDATE_ERROR_MSG = "Error while updating : ";
     const STOCK_UPDATE_ERROR_MSG = "Error while updating stock : ";
-    const MIN = 1, MAX = 10;
+    const MIN = 1;
+    const MAX = 10;
 
     public function __construct(PDO $db_conn, array $amount_list) {
         $this->db_conn = $db_conn;

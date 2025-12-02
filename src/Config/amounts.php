@@ -1,4 +1,6 @@
 <?php
+global $amounts;
+
 $amounts = [
     '500' => [
         'value' => 500,

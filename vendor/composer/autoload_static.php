@@ -6,22 +6,35 @@ namespace Composer\Autoload;
 
 class ComposerStaticInitcfa09735439ce01d6d40cc55965be038
 {
+    public static $files = array (
+        'c3edfb799e982e501ba65d3ced9e8ffe' => __DIR__ . '/../..' . '/src/Config/amounts.php',
+        'd219a2c00e1782d052ae874262061794' => __DIR__ . '/../..' . '/src/Config/bootstrap.php',
+        'af33cbf44dc8dd75503fa29c0386f764' => __DIR__ . '/../..' . '/src/Config/utils.php',
+    );
+
+    public static $prefixLengthsPsr4 = array (
+        'A' =>
+        array (
+            'App\\' => 4,
+        ),
+    );
+
+    public static $prefixDirsPsr4 = array (
+        'App\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/src',
+        ),
+    );
+
     public static $classMap = array (
-        'AmountModel' => __DIR__ . '/../..' . '/src/models/AmountModel.php',
-        'CashierModel' => __DIR__ . '/../..' . '/src/models/CashierModel.php',
-        'CashierModelInterface' => __DIR__ . '/../..' . '/src/interfaces/CashierModelInterface.php',
-        'CashierView' => __DIR__ . '/../..' . '/src/views/CashierView.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'Database' => __DIR__ . '/../..' . '/src/config/Database.php',
-        'DatabaseInterface' => __DIR__ . '/../..' . '/src/interfaces/DatabaseInterface.php',
-        'EdgeCaseException' => __DIR__ . '/../..' . '/src/exceptions/EdgeCaseException.php',
-        'EnvFileExtractionException' => __DIR__ . '/../..' . '/src/exceptions/EnvFileExtractionException.php',
-        'FormatedDisplayInterface' => __DIR__ . '/../..' . '/src/interfaces/FormatedDisplayInterface.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
+            $loader->prefixLengthsPsr4 = ComposerStaticInitcfa09735439ce01d6d40cc55965be038::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitcfa09735439ce01d6d40cc55965be038::$prefixDirsPsr4;
             $loader->classMap = ComposerStaticInitcfa09735439ce01d6d40cc55965be038::$classMap;
 
         }, null, ClassLoader::class);
