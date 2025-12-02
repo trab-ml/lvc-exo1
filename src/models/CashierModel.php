@@ -1,13 +1,4 @@
 <?php
-const CURRENT_DIR = __DIR__;
-const PATH_TO_INTERFACE_PACKAGE = CURRENT_DIR . "/../interfaces";
-
-require_once PATH_TO_INTERFACE_PACKAGE . "/FormatedDisplayInterface.php";
-require_once PATH_TO_INTERFACE_PACKAGE . "/CashierModelInterface.php";
-require_once PATH_TO_INTERFACE_PACKAGE . "/DatabaseInterface.php";
-require_once CURRENT_DIR . "/AmountModel.php";
-require_once CURRENT_DIR . "/../exceptions/EdgeCaseException.php";
-
 class CashierModel implements FormatedDisplayInterface, CashierModelInterface, DatabaseInterface {
     private ?PDO $db_conn;
     private array $amount_list;
