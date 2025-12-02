@@ -18,6 +18,8 @@ GRANT ALL PRIVILEGES ON *.* TO 'newuser'@'localhost';
 FLUSH PRIVILEGES;
 ``
 
+composer dump-autoload # --help
+
 ```
 
 - [Backlog](https://github.com/users/trab-ml/projects/20/views/1)
@@ -32,3 +34,4 @@ FLUSH PRIVILEGES;
 
 - [try-catch](https://www.php.net/manual/fr/language.exceptions.php)
 - [php-error-logs](https://last9.io/blog/php-error-logs/)
+- [php-composer-autoload](https://www.phptutorial.net/php-oop/php-composer-autoload/)

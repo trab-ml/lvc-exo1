@@ -1,27 +1,14 @@
 <?php
 error_reporting(E_ALL);
 
+require_once "bootstrap.php";
+
 if (file_exists("src/utils.php")
     && file_exists("src/amounts.php")) {
     require_once "src/utils.php";
     require_once "src/amounts.php";
 }
 
-spl_autoload_register(function ($classe) {
-    $paths = [
-        "src/{$classe}.php",
-        "src/exceptions/{$classe}.php",
-        "src/interfaces/{$classe}.php",
-        "src/models/{$classe}.php",
-        "src/views/{$classe}.php"
-    ];
-    foreach ($paths as $path) {
-        if (file_exists($path)) {
-            require_once $path;
-            break;
-        }
-    }
-});
 $conn = Database::get_instance();
 global $amounts;
 

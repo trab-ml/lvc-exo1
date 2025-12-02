@@ -1,0 +1,5 @@
+{
+    "autoload": {
+        "classmap": ["src/config", "src/exceptions", "src/interfaces", "src/models", "src/views"]
+    }
+}
