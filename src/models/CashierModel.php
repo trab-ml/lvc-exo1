@@ -84,58 +84,29 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
         return $this->format_line($amountModel->get_type(), $amountModel->get_value(), $needed_qty);
     }
 
-    private function deposite_amount($stock_list_by_value_desc, $stock_list_length, $amount_to_return): void {
-        for ($i = 0; $i < $stock_list_length && $amount_to_return != 0; $i++) {
-            $val = $stock_list_by_value_desc[$i]['value'];
-            $mod = ($amount_to_return * 100) % ($val * 100);
-            $needed_qty = 1;
-            if ($mod == 0) {
-                $amount_to_return = 0;
-                $needed_qty = $amount_to_return / $val;
-            } elseif ($amount_to_return >= $val) {
-                $amount_to_return = $amount_to_return - $val;
-            }
-
-            $amountModel = new AmountModel($stock_list_by_value_desc[$i]['id'],
-                            $stock_list_by_value_desc[$i]['value'],
-                            $stock_list_by_value_desc[$i]['qty'],
-                            $stock_list_by_value_desc[$i]['type']);
-            $this->update_stock_qty($needed_qty, $amountModel);
-        }
-    }
-
     private function compute_due_amount($stock_list_by_value_desc, $stock_list_length, $amount_to_return, $is_decimal = false): string {
         try {
             $this->db_conn->beginTransaction();
             $amount_to_return_copy = $amount_to_return;
-
-            $this->deposite_amount(
-                $stock_list_by_value_desc,
-                $stock_list_length,
-                $amount_to_return_copy);
-
             $result = "";
-            for ($i = 0; $i < $stock_list_length && $amount_to_return_copy != 0; $i++) {
-                $val = $stock_list_by_value_desc[$i]['value'];
-                $mod = $is_decimal ? ($amount_to_return_copy * 100) % ($val * 100) : $amount_to_return_copy % $val;
-                $available_qty = $stock_list_by_value_desc[$i]['qty'];
-                $needed_qty = 1;
-                if ($mod == 0) {
-                    $needed_qty = $amount_to_return_copy / $val;
-                    $amount_to_return_copy = $needed_qty <= $available_qty
-                                    ? 0
-                                    : $amount_to_return_copy - $available_qty * $val;
-                } elseif ($amount_to_return_copy >= $val) {
-                    $amount_to_return_copy = $amount_to_return_copy - $val;
-                }
 
-                $amountModel = new AmountModel((int) $stock_list_by_value_desc[$i]['id'],
-                                $val,
-                                (int) $available_qty,
-                                $stock_list_by_value_desc[$i]['type']);
-                $result .= $this->update_stock_qty((int) $needed_qty, $amountModel);
+            for ($i = 0; $i < $stock_list_length && $amount_to_return_copy > 0; $i++) {
+                $val = $stock_list_by_value_desc[$i]['value'];
+                $available_qty = $stock_list_by_value_desc[$i]['qty'];
+                $needed_qty = $this->calculate_needed_qty($amount_to_return_copy, $val, $available_qty, $is_decimal);
+
+                if ($needed_qty > 0) {
+                    $amountModel = new AmountModel(
+                        (int) $stock_list_by_value_desc[$i]['id'],
+                        $val,
+                        (int) $available_qty,
+                        $stock_list_by_value_desc[$i]['type']
+                    );
+                    $result .= $this->update_stock_qty((int) $needed_qty, $amountModel);
+                    $amount_to_return_copy -= $needed_qty * $val;
+                }
             }
-            
+
             $this->db_conn->commit();
         } catch (PDOException $ex) {
             handle_error(self::STOCK_UPDATE_ERROR_MSG, $ex);
@@ -145,12 +116,30 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
         return $result;
     }
 
+    private function calculate_needed_qty($amount_to_return, $val, $available_qty, $is_decimal): int {
+        if ($amount_to_return < $val) {
+            return 0;
+        }
+
+        $needed_qty = $is_decimal
+            ? (int) floor(($amount_to_return * 100) / ($val * 100))
+            : (int) floor($amount_to_return / $val);
+
+        return min($needed_qty, $available_qty);
+    }
+
     private function handle_edge_cases($loan, $debt): array {
-        if ($loan <= 0) {
+        if (!isset($loan)
+            || !isset($debt)
+            || $loan <= 0) {
             $error_msg = $this->format_line_msg("Vous n'avez rien à payer !");
         }
         if ($debt < $loan) {
             $error_msg = $this->format_line_msg("Le montant à payer ($debt €) ne peut être inférieur à l'emprunt ($loan €) effectué !");
+        }
+
+        if (isset($error_msg)) {
+            throw new EdgeCaseException($error_msg);
         }
 
         try {
@@ -178,9 +167,16 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
             $result .= "<p class='col-orange m'>(Montant à payer: $debt €, Emprunt: $loan €)</p>";
             $result .= "<p class='col-orange m'>(À payer: Partie entière: $amount_to_return, Partie décimale: $decimal_part_of_amount_to_return)</p>";
 
-            $result .= $this->compute_due_amount($stock_list_by_value_desc, $stock_list_length, $amount_to_return);
+            $result .= $this->compute_due_amount(
+                $stock_list_by_value_desc,
+                $stock_list_length,
+                $amount_to_return);
             if ($decimal_part_of_amount_to_return > 0) {
-                $result .= $this->compute_due_amount($stock_list_by_value_desc, $stock_list_length, $decimal_part_of_amount_to_return, true);
+                $result .= $this->compute_due_amount(
+                    $stock_list_by_value_desc,
+                    $stock_list_length,
+                    $decimal_part_of_amount_to_return,
+                    true);
             }
         }
 

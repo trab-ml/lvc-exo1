@@ -1,16 +1,18 @@
 <?php
 error_reporting(E_ALL);
 
-require_once "src/database.php";
+require_once "src/Database.php";
 require_once "src/utils.php";
 require_once "src/models/CashierModel.php";
 require_once "src/views/CashierView.php";
 require_once "src/amounts.php";
 
-global $conn, $amounts;
+$conn = Database::get_instance();
+global $amounts;
+
 try {
     $cashier_model = new CashierModel($conn, $amounts);
-    //$cashier_model->initialize_stock();
+    // $cashier_model->initialize_stock();
 
     $stock_list = $cashier_model->fetch_stock_order_by_desc();
     $cashier_view = new CashierView($stock_list, $amounts);
