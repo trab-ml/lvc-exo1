@@ -3,15 +3,14 @@ error_reporting(E_ALL);
 
 require_once  __DIR__ . "/src/Config/bootstrap.php";
 
-use App\Config\Database;
+use App\Config\DatabaseConnection;
 use App\Models\CashierModel;
 use App\Views\CashierView;
 
-$conn = Database::get_instance();
 global $amounts;
 
 try {
-    $cashier_model = new CashierModel($conn, $amounts);
+    $cashier_model = new CashierModel($amounts);
     // $cashier_model->initialize_stock();
 
     $stock_list = $cashier_model->fetch_stock_order_by_desc();
@@ -58,6 +57,5 @@ try {
 </html>
 
 <?php
-global $cashier_model;
-$cashier_model->close_connexion();
+DatabaseConnection::close_connexion();
 ?>

@@ -22,6 +22,8 @@ composer dump-autoload # --help
 
 ```
 
+![Le Cashier - Architecture](./public/le%20cashier.png)
+
 - [Backlog](https://github.com/users/trab-ml/projects/20/views/1)
 
 ## Install

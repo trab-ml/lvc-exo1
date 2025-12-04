@@ -1,13 +1,13 @@
 <?php
 namespace App\Models;
 
-use App\Interfaces\FormatedDisplayInterface;
+use App\Config\DatabaseConnection;
+use App\Abstracts\FormatedDisplayAbstract;
 use App\Interfaces\CashierModelInterface;
-use App\Interfaces\DatabaseInterface;
 use App\Exceptions\EdgeCaseException;
 use \PDO, \PDOException;
 
-class CashierModel implements FormatedDisplayInterface, CashierModelInterface, DatabaseInterface {
+class CashierModel extends FormatedDisplayAbstract implements CashierModelInterface {
     private ?PDO $db_conn;
     private array $amount_list;
 
@@ -18,8 +18,8 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
     const MIN = 1;
     const MAX = 10;
 
-    public function __construct(PDO $db_conn, array $amount_list) {
-        $this->db_conn = $db_conn;
+    public function __construct(array $amount_list) {
+        $this->db_conn = DatabaseConnection::get_db_conn();
         $this->amount_list = $amount_list;
     }
 
@@ -131,14 +131,12 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
     private function handle_edge_cases($loan, $debt): array {
         if (!isset($loan)
             || !isset($debt)
-            || $loan <= 0) {
+            || $debt <= 0) {
             $error_msg = $this->format_line_msg("Vous n'avez rien à payer !");
+            throw new EdgeCaseException($error_msg);
         }
         if ($debt < $loan) {
             $error_msg = $this->format_line_msg("Le montant à payer ($debt €) ne peut être inférieur à l'emprunt ($loan €) effectué !");
-        }
-
-        if (isset($error_msg)) {
             throw new EdgeCaseException($error_msg);
         }
 
@@ -182,25 +180,5 @@ class CashierModel implements FormatedDisplayInterface, CashierModelInterface, D
 
         $result .= "</section>";
         return $result;
-    }
-
-    public function format_line_msg($msg): string {
-        return "<section class='col-red xxl'>{$msg}</section>";
-    }
-
-    public function format_line($type, $val, $qty): string {
-        return "<p class='col-red'>{$type}(s) de {$val} <span class='xxl col-red'>X {$qty}</span>.</p>";
-    }
-
-    public function close_connexion(): void {
-        $this->set_db_conn(null);
-    }
-
-    public function get_db_conn(): PDO {
-        return $this->db_conn;
-    }
-
-    private function set_db_conn(?PDO $conn): void {
-        $this->db_conn = $conn;
     }
 }
