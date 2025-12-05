@@ -3,12 +3,19 @@ h1 {
 }
 
 main {
+    width: 100%;
     display: flex;
     flex-direction: row;
 }
 
-main section {
-    width: 33%;
+main .stock-ctn {
+    width: 70%;
+}
+
+main .computation-ctn {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
 }
 
 .m {

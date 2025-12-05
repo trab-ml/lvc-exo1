@@ -18,16 +18,33 @@ class CashierView {
             return;
         }
 
-        echo "<ul>";
+        echo "<section class='w-full bg-white pb-[1rem] pt-[1rem] m-[0.5rem] dark:bg-dark stock-ctn border border-solid rounded-lg'>
+            <div class='mx-auto px-2 sm:container'>
+                <div class='mb-2'>
+                    <h2 class='mb-2 text-2xl font-semibold text-dark sm:text-[28px] dark:text-white'>
+                        Dans la caisse
+                    </h2>
+                    <p class='text-base text-body-color dark:text-dark-6'>
+                        Le stock disponible en base de données.
+                    </p>
+                </div>
+                <div class='-mx-2 flex flex-wrap'>";
+
         foreach ($this->stock_list as $currency) {
             $val = (string) $currency['value'];
             $img_link = $this->amount_list[$val]['img'];
-            echo "<li class='stock-list'>
-                    <img src='$img_link' alt='give me that, it s only paper:)'/>
-                    <span class='xxl col-red'> X {$currency['qty']}</span>
-                </li>";
+
+            echo "<div class='w-full px-2 sm:w-1/2 lg:w-1/4 xl:w-1/4'>
+                    <div class='mb-4'>
+                        <div class='mb-[4px] overflow-hidden rounded-sm'>
+                            <img src='$img_link' alt='give me that, it s only paper:)'
+                                class='h-full w-full object-cover object-center' />
+                            <span class='xxl col-red'> X {$currency['qty']}</span>
+                        </div>
+                    </div>
+                </div>";
         }
-        echo "</ul>";
+        echo "</div> </div> </section>";
     }
 
     public function get_transaction_msg(): string {
